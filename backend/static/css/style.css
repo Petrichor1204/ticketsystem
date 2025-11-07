@@ -1,0 +1,182 @@
+@font-face {
+    font-family: 'MyFont';
+    src: url('../fonts/SuperMario256.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    }
+body {
+    background-color: #fff;
+    font-family: 'MyFont';
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    }
+
+header {
+  background-color: #004080;
+  padding: 15px 0;
+}
+
+nav ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+nav ul li {
+  display: inline-block;
+  margin: 0 15px;
+}
+
+nav ul li a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav ul li a:hover,
+nav ul li a.active {
+  text-decoration: underline;
+}
+
+/* Title and subtitle */
+h1 {
+  margin-top: 40px;
+  color: #222;
+}
+
+p {
+  margin-bottom: 30px;
+  color: #555;
+}
+
+/* Form container */
+form {
+  display: inline-block;
+  text-align: left;
+  background: white;
+  padding: 25px 35px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  width: 300px;
+}
+
+/* Form elements */
+label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+input[type="submit"] {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  background-color: #004080;
+  color: white;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+input[type="submit"]:hover {
+  background-color: #0059b3;
+}
+/* Layout: split screen */
+.main-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 50px auto;
+  width: 80%;
+  gap: 40px;
+}
+
+/* Left section (form) */
+.left-section {
+  flex: 1;
+  text-align: left;
+}
+
+/* Right section (status + availability) */
+.right-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* Status and availability boxes */
+.status-box,
+.availability-box {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  text-align: left;
+}
+
+/* Table inside availability */
+.availability-box table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.availability-box th,
+.availability-box td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+.availability-box th {
+  background-color: #004080;
+  color: white;
+}
+
+.status-box h2,
+.availability-box h2 {
+  margin-top: 0;
+  color: #004080;
+}
+
+/* Adjust footer to stay at bottom without overlapping */
+footer {
+  position: static;
+  margin-top: 60px;
+}
+
+button {
+    background-color: #004080;
+    color:white;
+    margin: 10px;
+    width: 200px;
+    height: 40px;
+    font-family: 'MyFont';
+}
+button:hover,
+button.active {
+  cursor:pointer;
+}
+
+
+/* Footer */
+footer {
+  margin-top: 50px;
+  padding: 15px;
+  background-color: #004080;
+  color: white;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}

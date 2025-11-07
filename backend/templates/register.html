@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration</title>
+  <link rel="stylesheet" href="https://unpkg.com/98.css" />
+  <link rel="stylesheet" href="../static/css/style.css">
+</head>
+
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="register.html">Register</a></li>
+        <li><a href="summary.html">Summary</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="main-container">
+    <!-- Left side: registration form -->
+    <section class="left-section">
+      <h1>Register for Your Ticket</h1>
+      <form id="registrationForm" onsubmit="registerUser(event)">
+        <label for="fname">First Name:</label><br>
+        <input type="text" id="fname" name="fname" required><br>
+
+        <label for="lname">Last Name:</label><br>
+        <input type="text" id="lname" name="lname" required><br>
+
+        <label for="ticketType">Ticket Type:</label><br>
+        <select id="ticketType" name="ticketType" onchange="showOtherInput()" required>
+          <option value="vip">VIP</option>
+          <option value="regular">Regular</option>
+          <option value="other">Other</option>
+        </select><br>
+
+        <div id="otherTicketDiv" style="display:none; margin-top:10px;">
+          <label for="otherTicket">Please specify:</label><br>
+          <input type="text" id="otherTicket" name="otherTicket">
+        </div>
+
+        <input type="submit" value="Register">
+      </form>
+    </section>
+
+    <!-- Right side: status and availability -->
+    <section class="right-section">
+      <div class="status-box">
+        <h2>Purchase Status</h2>
+        <p><strong>Ticket Type:</strong> <span id="status-type">—</span></p>
+        <p><strong>Queue Position:</strong> <span id="queue-position">—</span></p>
+        <p><strong>Status:</strong> <span id="purchase-status">Waiting...</span></p>
+      </div>
+
+      <div class="availability-box">
+        <h2>Ticket Availability</h2>
+        <table>
+          <tr><th>Type</th><th>Available</th></tr>
+          <tr><td>VIP</td><td id="vip-count">10</td></tr>
+          <tr><td>Regular</td><td id="regular-count">25</td></tr>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Ticket System @ 2025
+  </footer>
+
+  <script src="../static/js/main.js"></script>
+  <script>
+    function showOtherInput() {
+      const select = document.getElementById('ticketType');
+      const otherDiv = document.getElementById('otherTicketDiv');
+      otherDiv.style.display = select.value === 'other' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>
