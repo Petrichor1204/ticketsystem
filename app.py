@@ -14,6 +14,11 @@ app = Flask(__name__,
 @app.route("/")
 def index():
     return render_template('index.html')
+
+@app.route("/register")
+def register_page():
+    return render_template('register.html')
+
 # File setup
 paths = DataPaths(
     transactions_csv="data/transactions.csv",
@@ -38,25 +43,52 @@ def get_availability():
     vip_left = VIP_TICKETS
     reg_left = REGULAR_TICKETS
     transactions = read_csv_as_dicts(paths.transactions_csv)
+
     for t in transactions:
-        if t["status"].lower() == "confirmed":
-            if t["ticket_type"].lower() == "vip":
+        status = t.get("status", "").lower()
+        ticket_type = t.get("ticket_type", "").lower()
+
+        if status == "confirmed":
+            if ticket_type == "vip":
                 vip_left -= 1
-            elif t["ticket_type"].lower() == "regular":
+            elif ticket_type == "regular":
                 reg_left -= 1
+
     return {"VIP": max(vip_left, 0), "Regular": max(reg_left, 0)}
 
 
-@app.route("/register", methods=["POST"])
+
+def get_queue_position(first_name, last_name, ticket_type):
+    """Get user's position in their respective queue."""
+    queue = read_csv_as_dicts(paths.queue_csv)
+    vip_queue, regular_queue = separate_queues(queue)
+    
+    target_queue = vip_queue if ticket_type.lower() == "vip" else regular_queue
+    
+    for idx, user in enumerate(target_queue):
+        if user["first_name"] == first_name and user["last_name"] == last_name:
+            # Add 1 because position is 1-indexed for users
+            return idx + 1
+    return None
+
+
+@app.route("/api/register", methods=["POST"])
 def register_user():
     """Add a new user to the correct queue (VIP or Regular)."""
     data = request.json
-    first_name = data.get("first_name")
-    last_name = data.get("last_name")
-    ticket_type = data.get("ticket_type", "").title()
+    first_name = data.get("first_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    ticket_type = data.get("ticket_type", "").strip().title()
+
+    if not first_name or not last_name:
+        return jsonify({"error": "First name and last name are required"}), 400
 
     if ticket_type not in ["VIP", "Regular"]:
         return jsonify({"error": "Invalid ticket type"}), 400
+
+
+    # Normalize to VIP/Regular
+    ticket_type = "VIP" if ticket_type == "Vip" else "Regular"
 
     new_entry = {
         "first_name": first_name,
@@ -69,9 +101,79 @@ def register_user():
     queue.append(new_entry)
     write_queue(paths.queue_csv, queue)
 
+    # Get position in queue
+    position = get_queue_position(first_name, last_name, ticket_type)
+
     return jsonify({
-        "message": f"{first_name} added to {ticket_type} queue.",
+        "message": f"{first_name} {last_name} added to {ticket_type} queue.",
+        "first_name": first_name,
+        "last_name": last_name,
+        "ticket_type": ticket_type,
+        "queue_position": position,
         "current_queue_length": len(queue)
+    })
+
+
+@app.route("/api/process_user", methods=["POST"])
+def process_user():
+    """Process a specific user's ticket request."""
+    data = request.json
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+    
+    queue = read_csv_as_dicts(paths.queue_csv)
+    vip_queue, regular_queue = separate_queues(queue)
+
+    availability = get_availability()
+    vip_left = availability["VIP"]
+    reg_left = availability["Regular"]
+
+    # Find the user in queues
+    user_found = None
+    ticket_type = None
+    
+    # Check VIP queue first
+    for user in vip_queue:
+        if user["first_name"] == first_name and user["last_name"] == last_name:
+            user_found = user
+            ticket_type = ticket_type.upper()
+            break
+    
+    # If not in VIP, check Regular queue
+    if not user_found:
+        for user in regular_queue:
+            if user["first_name"] == first_name and user["last_name"] == last_name:
+                user_found = user
+                ticket_type = "Regular"
+                break
+    
+    if not user_found:
+        return jsonify({"error": "User not found in queue"}), 404
+
+    # Determine status based on availability
+    if ticket_type == "VIP":
+        status = "Confirmed" if vip_left > 0 else "Sold Out"
+    else:
+        status = "Confirmed" if reg_left > 0 else "Sold Out"
+
+    # Log transaction
+    append_transaction(paths.transactions_csv, {
+        "first_name": first_name,
+        "last_name": last_name,
+        "ticket_type": ticket_type,
+        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "status": status
+    })
+
+    # Remove user from queue
+    updated_queue = [u for u in queue if not (u["first_name"] == first_name and u["last_name"] == last_name)]
+    write_queue(paths.queue_csv, updated_queue)
+
+    return jsonify({
+        "processed": f"{first_name} {last_name}",
+        "ticket_type": ticket_type,
+        "status": status,
+        "remaining_tickets": get_availability()
     })
 
 

@@ -3,17 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registration</title>
+  <title>Registration - Event Ticketing System</title>
   <link rel="stylesheet" href="https://unpkg.com/98.css" />
-  <link rel="stylesheet" href="../static/css/style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .status-processing {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    
+    @keyframes dots {
+      0%, 20% { content: ''; }
+      40% { content: '.'; }
+      60% { content: '..'; }
+      80%, 100% { content: '...'; }
+    }
+  </style>
 </head>
 
 <body>
   <header>
     <nav>
       <ul>
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="register.html">Register</a></li>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="register.html" class="active">Register</a></li>
         <li><a href="summary.html">Summary</a></li>
       </ul>
     </nav>
@@ -59,23 +81,32 @@
         <h2>Ticket Availability</h2>
         <table>
           <tr><th>Type</th><th>Available</th></tr>
-          <tr><td>VIP</td><td id="vip-count">10</td></tr>
-          <tr><td>Regular</td><td id="regular-count">25</td></tr>
+          <tr><td>VIP</td><td id="vip-count">3</td></tr>
+          <tr><td>Regular</td><td id="regular-count">5</td></tr>
         </table>
       </div>
     </section>
   </main>
 
   <footer>
-    Ticket System @ 2025
+    Ticket System © 2025
   </footer>
 
-  <script src="../static/js/main.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
   <script>
     function showOtherInput() {
       const select = document.getElementById('ticketType');
       const otherDiv = document.getElementById('otherTicketDiv');
-      otherDiv.style.display = select.value === 'other' ? 'block' : 'none';
+      const otherInput = document.getElementById('otherTicket');
+      
+      if (select.value === 'other') {
+        otherDiv.style.display = 'block';
+        otherInput.required = true;
+      } else {
+        otherDiv.style.display = 'none';
+        otherInput.required = false;
+      }
     }
   </script>
 </body>
