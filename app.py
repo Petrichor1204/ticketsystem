@@ -74,11 +74,10 @@ def get_queue_position(first_name, last_name, ticket_type):
 
 @app.route("/api/register", methods=["POST"])
 def register_user():
-    """Add a new user to the correct queue (VIP or Regular)."""
     data = request.json
     first_name = data.get("first_name", "").strip()
     last_name = data.get("last_name", "").strip()
-    ticket_type = data.get("ticket_type", "").strip().title()
+    ticket_type = data.get("ticket_type", "").strip()
 
     if not first_name or not last_name:
         return jsonify({"error": "First name and last name are required"}), 400
@@ -88,7 +87,7 @@ def register_user():
 
 
     # Normalize to VIP/Regular
-    ticket_type = "VIP" if ticket_type == "Vip" else "Regular"
+    ticket_type = "VIP" if ticket_type == "VIP" else "Regular"
 
     new_entry = {
         "first_name": first_name,
@@ -136,7 +135,7 @@ def process_user():
     for user in vip_queue:
         if user["first_name"] == first_name and user["last_name"] == last_name:
             user_found = user
-            ticket_type = ticket_type.upper()
+            ticket_type = ticket_type
             break
     
     # If not in VIP, check Regular queue

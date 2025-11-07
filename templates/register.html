@@ -54,15 +54,9 @@
 
         <label for="ticketType">Ticket Type:</label><br>
         <select id="ticketType" name="ticketType" onchange="showOtherInput()" required>
-          <option value="vip">VIP</option>
-          <option value="regular">Regular</option>
-          <option value="other">Other</option>
+          <option value="VIP">VIP</option>
+          <option value="Regular">Regular</option>
         </select><br>
-
-        <div id="otherTicketDiv" style="display:none; margin-top:10px;">
-          <label for="otherTicket">Please specify:</label><br>
-          <input type="text" id="otherTicket" name="otherTicket">
-        </div>
 
         <input type="submit" value="Register">
       </form>
@@ -72,8 +66,8 @@
     <section class="right-section">
       <div class="status-box">
         <h2>Purchase Status</h2>
-        <p><strong>Ticket Type:</strong> <span id="status-type">—</span></p>
-        <p><strong>Queue Position:</strong> <span id="queue-position">—</span></p>
+        <p><strong>Ticket Type:</strong> <span id="status-type"></span></p>
+        <p><strong>Queue Position:</strong> <span id="queue-position"></span></p>
         <p><strong>Status:</strong> <span id="purchase-status">Waiting...</span></p>
       </div>
 
@@ -81,8 +75,8 @@
         <h2>Ticket Availability</h2>
         <table>
           <tr><th>Type</th><th>Available</th></tr>
-          <tr><td>VIP</td><td id="vip-count">3</td></tr>
-          <tr><td>Regular</td><td id="regular-count">5</td></tr>
+          <tr><td>VIP</td><td id="vip-count">—</td></tr>
+          <tr><td>Regular</td><td id="regular-count">—</td></tr>
         </table>
       </div>
     </section>

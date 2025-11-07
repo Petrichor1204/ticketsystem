@@ -6,16 +6,6 @@ async function registerUser(event) {
     const ticketTypeSelect = document.getElementById('ticketType');
     let ticketType = ticketTypeSelect.value;
 
-    // Handle "other" option
-    if (ticketType === 'other') {
-        const otherTicket = document.getElementById('otherTicket').value.trim();
-        if (!otherTicket) {
-            alert('Please specify the ticket type');
-            return;
-        }
-        ticketType = otherTicket;
-    }
-
     const formData = {
         first_name: firstName,
         last_name: lastName,
@@ -46,10 +36,10 @@ async function registerUser(event) {
         // Show user is in queue
         updateStatusDisplay(data.ticket_type, data.queue_position, 'In Queue');
         
-        // Wait a moment, then start processing
-        setTimeout(async () => {
-            await processUserTicket(firstName, lastName, data.ticket_type);
-        }, 1000);
+        // // Wait a moment, then start processing
+        // setTimeout(async () => {
+        //     await processUserTicket(firstName, lastName, data.ticket_type);
+        // }, 1000);
 
     } catch (error) {
         console.error('Error:', error);
@@ -161,8 +151,8 @@ async function updateAvailability() {
         const vipAvailableEl = document.getElementById('vipAvailable');
         const regularAvailableEl = document.getElementById('regularAvailable');
         
-        if (vipAvailableEl) vipAvailableEl.textContent = data.VIP;
-        if (regularAvailableEl) regularAvailableEl.textContent = data.Regular;
+        if (vipAvailableEl) vipAvailableEl.textContent = data.vip_left;
+        if (regularAvailableEl) regularAvailableEl.textContent = data.reg_left;
         
     } catch (error) {
         console.error('Error updating availability:', error);
