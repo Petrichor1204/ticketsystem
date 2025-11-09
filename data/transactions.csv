@@ -1,1 +1,8 @@
 first_name,last_name,ticket_type,time,status
+
+Rock,Paul,VIP,2025-11-09 03:25:57,Confirmed
+Brad,Pitt,VIP,2025-11-09 03:25:58,Confirmed
+anna,Paul,REGULAR,2025-11-09 03:25:59,Confirmed
+Bin,Tea,REGULAR,2025-11-09 03:26:00,Confirmed
+Esi,Crab,VIP,2025-11-09 03:27:53,Confirmed
+Bob,Jared,VIP,2025-11-09 03:27:54,Sold Out

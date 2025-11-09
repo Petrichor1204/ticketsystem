@@ -1,3 +1,16 @@
+function showPopup(message, type = 'success', duration = 3000) {
+  const popup = document.getElementById('popup-message');
+  if (!popup) return;
+
+  popup.textContent = message;
+  popup.className = `popup-message show ${type}`;
+
+  // Remove popup after duration
+  setTimeout(() => {
+    popup.className = 'popup-message';
+  }, duration);
+}
+
 async function registerUser(event) {
     event.preventDefault();
     
@@ -26,7 +39,7 @@ async function registerUser(event) {
         
         if (!response.ok) {
             const error = await response.json();
-            alert(error.error || 'Registration failed');
+            showPopup(error.error || 'Registration failed');
             updateStatusDisplay('—', '—', 'Failed', '—');
             return;
         }
@@ -43,7 +56,7 @@ async function registerUser(event) {
 
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred while registering');
+        showPopup('An error occurred while registering');
         updateStatusDisplay('—', '—', 'Error', '—');
     }
 }
@@ -69,8 +82,8 @@ async function processUserTicket(firstName, lastName, ticketType) {
 
         if (!response.ok) {
             const error = await response.json();
-            alert(error.error || 'Processing failed');
-            updateStatusDisplay(ticketType, '—', 'Failed');
+            showPopup(error.error || 'Processing failed');
+            updateStatusDisplay(`${firstName} ${lastName}`, ticketType, '—', 'Failed');
             return;
         }
 
@@ -92,9 +105,9 @@ async function processUserTicket(firstName, lastName, ticketType) {
 
         // Show success or sold out message
         if (data.status === 'Confirmed') {
-            alert(`Success! Your ${data.ticket_type} ticket has been confirmed.`);
+            showPopup(`Success! Your ${data.ticket_type} ticket has been confirmed.`);
         } else {
-            alert(`Sorry, ${data.ticket_type} tickets are sold out.`);
+            showPopup(`Sorry, ${data.ticket_type} tickets are sold out.`);
         }
 
         // Reset form
@@ -103,8 +116,8 @@ async function processUserTicket(firstName, lastName, ticketType) {
 
     } catch (error) {
         console.error('Error:', error);
-        alert('An error occurred during processing');
-        updateStatusDisplay(ticketType, '—', 'Error');
+        showPopup('An error occurred during processing');
+        updateStatusDisplay(`${firstName} ${lastName}`, ticketType, '—', 'Error');
     }
 }
 
@@ -204,7 +217,7 @@ async function startPurchase() {
     const ticketType = document.getElementById('ticketType').value;
 
     if (!firstName || !lastName) {
-        alert('Please register first!');
+        showPopup('Please register first!');
         return;
     }
 
@@ -219,7 +232,7 @@ async function startPurchase() {
 
         if (!response.ok) {
             const err = await response.json();
-            alert(err.error || 'Processing failed.');
+            showPopup(err.error || 'Processing failed.');
             return;
         }
 
@@ -237,16 +250,21 @@ async function startPurchase() {
             ? '✓ Confirmed'
             : '✗ Sold Out';
 
-        updateStatusDisplay(ticketType, '—', finalStatus);
+        updateStatusDisplay(ticketType, 'Not in queue', finalStatus, `${firstName} ${lastName}`);
         await updateAvailability();
 
-        alert(finalStatus === '✓ Confirmed'
+        showPopup(finalStatus === '✓ Confirmed'
             ? 'Your ticket has been confirmed!'
             : 'Sorry, tickets sold out before it reached you.');
+            
+        // Only clear form inputs, keep status display
+        document.getElementById('fname').value = '';
+        document.getElementById('lname').value = '';
+        document.getElementById('ticketType').value = 'VIP';
 
     } catch (err) {
         console.error(err);
-        alert('Error during processing.');
+        showPopup('Error during processing.');
     }
 }
 
@@ -256,7 +274,7 @@ async function cancelTicket() {
     const ticketType = document.getElementById('ticketType').value;
 
     if (!firstName || !lastName) {
-        alert('Please enter the first and last name of the ticket to cancel.');
+        showPopup('Please enter the first and last name of the ticket to cancel.');
         return;
     }
 
@@ -276,7 +294,7 @@ async function cancelTicket() {
         // First check if response is ok
         if (!response.ok) {
             const error = await response.json();
-            alert(error.error || 'Cancellation failed.');
+            showPopup(error.error || 'Cancellation failed.');
             updateStatusDisplay(ticketType, '—', 'Cancellation Failed');
             return;
         }
@@ -285,18 +303,18 @@ async function cancelTicket() {
         const result = await response.json();
 
         // Update the status visually
-        updateStatusDisplay(ticketType, '—', 'Cancelled');
+        updateStatusDisplay(ticketType, 'Not in queue', 'Cancelled', `${firstName} ${lastName}`);
         await updateAvailability(); // Also update ticket availability
         await updateQueue(); // Reflect new queue state
 
-        alert(result.message || 'Ticket successfully cancelled.');
+        showPopup(result.message || 'Ticket successfully cancelled.');
 
         // Reset form and UI
         document.getElementById('registrationForm').reset();
 
     } catch (err) {
         console.error('Error:', err);
-        alert('Error during cancellation.');
-        updateStatusDisplay(ticketType, '—', 'Error');
+        showPopup('Error during cancellation.');
+        updateStatusDisplay(`${firstName} ${lastName}`, ticketType, 'Not in queue', 'Error');
     }
 }

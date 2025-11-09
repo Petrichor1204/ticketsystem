@@ -202,12 +202,46 @@ input[type="button"]:hover {
 }
 
 select {
-  margin-bottom: 20px;
+  margin-bottom: 60px;
 }
 
 span {
   color: green;
 }
+/* Popup Message Styling */
+.popup-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: rgba(0, 64, 128, 0.9);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 8px;
+  font-size: 1em;
+  font-family: 'MyFont';
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.3s ease;
+  transform: translateY(-10px);
+}
+
+.popup-message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.popup-message.success {
+  background-color: #2e8b57; 
+}
+
+.popup-message.error {
+  background-color: #c62828;
+}
+.popup-message.warning {
+  background-color: #f39c12; 
+}
+
 footer {
   margin-top: 50px;
   padding: 15px;

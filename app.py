@@ -37,7 +37,6 @@ REGULAR_TICKETS = 5
 
 
 def separate_queues(queue_rows):
-    """Split all users into VIP and Regular queues based on ticket type."""
     vip = [row for row in queue_rows if row["ticket_type"].lower() == "vip"]
     regular = [row for row in queue_rows if row["ticket_type"].lower() == "regular"]
     return vip, regular
@@ -142,7 +141,7 @@ def process_user():
     availability = get_availability()
     vip_left, reg_left = availability["VIP"], availability["Regular"]
 
-    # Order of service: VIP queue first, then Regular
+    # Order is priority-based: VIP queue first, then Regular
     serving_order = vip_queue + regular_queue
 
     updates = []
