@@ -39,7 +39,7 @@ nav ul li a.active {
   text-decoration: underline;
 }
 
-/* Title and subtitle */
+
 h1 {
   margin-top: 40px;
   color: #222;
@@ -50,7 +50,7 @@ p {
   color: #555;
 }
 
-/* Form container */
+
 form {
   display: inline-block;
   text-align: left;
@@ -61,7 +61,7 @@ form {
   width: 300px;
 }
 
-/* Form elements */
+
 label {
   font-weight: bold;
   display: block;
@@ -91,7 +91,7 @@ input[type="submit"] {
 input[type="submit"]:hover {
   background-color: #0059b3;
 }
-/* Layout: split screen */
+
 .main-container {
   display: flex;
   justify-content: space-between;
@@ -101,13 +101,13 @@ input[type="submit"]:hover {
   gap: 40px;
 }
 
-/* Left section (form) */
+
 .left-section {
   flex: 1;
   text-align: left;
 }
 
-/* Right section (status + availability) */
+
 .right-section {
   flex: 1;
   display: flex;
@@ -115,7 +115,8 @@ input[type="submit"]:hover {
   gap: 30px;
 }
 
-/* Status and availability boxes */
+
+
 .status-box,
 .availability-box {
   background: white;
@@ -125,7 +126,7 @@ input[type="submit"]:hover {
   text-align: left;
 }
 
-/* Table inside availability */
+
 .availability-box table {
   width: 100%;
   border-collapse: collapse;
@@ -150,11 +151,6 @@ input[type="submit"]:hover {
   color: #004080;
 }
 
-/* Adjust footer to stay at bottom without overlapping */
-footer {
-  position: static;
-  margin-top: 60px;
-}
 
 button {
     background-color: #004080;
@@ -168,9 +164,50 @@ button:hover,
 button.active {
   cursor:pointer;
 }
+.buttons {
+  display: flex; 
+  justify-content: space-around; 
+  align-items: center; 
+  gap: 20px; 
+}
 
+input[type="button"] {
+  width: 50%;
+  padding: 10px;
+  border: none;
+  background-color: #0b5b08c4;
+  color: white;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+}
+input[type="button"]:hover {
+  background-color: #0059b3;
+}
 
-/* Footer */
+#cancelBtn {
+  background-color: rgba(198, 9, 40, 0.658);
+}
+.summary-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 30px auto;
+  width: 80%;
+  padding: 20px;
+  font-family: 'MyFont';
+  font-size: larger;
+}
+
+select {
+  margin-bottom: 20px;
+}
+
+span {
+  color: green;
+}
 footer {
   margin-top: 50px;
   padding: 15px;
@@ -179,4 +216,8 @@ footer {
   position: fixed;
   bottom: 0;
   width: 100%;
+}
+footer {
+  position: static;
+  margin-top: 60px;
 }

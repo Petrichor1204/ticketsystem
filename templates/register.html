@@ -34,9 +34,10 @@
   <header>
     <nav>
       <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="register.html" class="active">Register</a></li>
-        <li><a href="summary.html">Summary</a></li>
+        <li><a href="{{ url_for('index') }}" class="active">Home</a></li>
+        <!-- <li><a href="{{ url_for('register_page') }}">Register</a></li> -->
+        <li><a href="{{ url_for('register_page') }}">Availability</a></li>
+        <li><a href="{{ url_for('summary_page') }}">Summary</a></li>
       </ul>
     </nav>
   </header>
@@ -59,6 +60,11 @@
         </select><br>
 
         <input type="submit" value="Register">
+        <div class="buttons">
+          <input type="button" id="purchaseBtn" value="Purchase" onclick="startPurchase()" style="margin-top: 10px;">
+          <input type="button" id="cancelBtn" value="Cancel" onclick="cancelTicket()" style="margin-top: 10px;">
+        </div>
+
       </form>
     </section>
 
@@ -66,8 +72,9 @@
     <section class="right-section">
       <div class="status-box">
         <h2>Purchase Status</h2>
-        <p><strong>Ticket Type:</strong> <span id="status-type"></span></p>
-        <p><strong>Queue Position:</strong> <span id="queue-position"></span></p>
+        <p><strong>Customer Name:</strong> <span id="customer-name">—</span></p>
+        <p><strong>Ticket Type:</strong> <span id="ticket-type">—</span></p>
+        <p><strong>Queue Position:</strong> <span id="queue-position">—</span></p>
         <p><strong>Status:</strong> <span id="purchase-status">Waiting...</span></p>
       </div>
 

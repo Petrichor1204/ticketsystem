@@ -1,3 +1,4 @@
+import json
 from flask import Flask, request, jsonify, render_template
 from utils.storage import (
     DataPaths, ensure_files, read_csv_as_dicts,
@@ -19,6 +20,10 @@ def index():
 def register_page():
     return render_template('register.html')
 
+@app.route("/summary")
+def summary_page():
+    return render_template('summary.html')
+
 # File setup
 paths = DataPaths(
     transactions_csv="data/transactions.csv",
@@ -38,28 +43,36 @@ def separate_queues(queue_rows):
     return vip, regular
 
 
-def get_availability():
-    """Compute remaining tickets based on transactions."""
-    vip_left = VIP_TICKETS
-    reg_left = REGULAR_TICKETS
-    transactions = read_csv_as_dicts(paths.transactions_csv)
-
-    for t in transactions:
-        status = t.get("status", "").lower()
-        ticket_type = t.get("ticket_type", "").lower()
-
-        if status == "confirmed":
-            if ticket_type == "vip":
-                vip_left -= 1
-            elif ticket_type == "regular":
-                reg_left -= 1
-
-    return {"VIP": max(vip_left, 0), "Regular": max(reg_left, 0)}
+def get_availability():    
+    path = 'data/availability.json'
+    try:
+        with open(path, 'r') as f:
+            current = json.load(f)
+    except FileNotFoundError:
+        current = {"VIP": VIP_TICKETS, "Regular": REGULAR_TICKETS}
+        with open(path, 'w') as f:
+            json.dump(current, f)
+    return current
 
 
+def update_availability(ticket_type):
+    """Update availability after processing a ticket."""
+    try:
+        with open('data/availability.json', 'r') as f:
+            current = json.load(f)
+        
+        if ticket_type.upper() == "VIP":
+            current["VIP"] = max(current["VIP"] - 1, 0)
+        elif ticket_type.upper() == "REGULAR":
+            current["Regular"] = max(current["Regular"] - 1, 0)
+            
+        with open('data/availability.json', 'w') as f:
+            json.dump(current, f)
+            
+    except FileNotFoundError:
+        get_availability()  # Create initial file if it doesn't exist
 
 def get_queue_position(first_name, last_name, ticket_type):
-    """Get user's position in their respective queue."""
     queue = read_csv_as_dicts(paths.queue_csv)
     vip_queue, regular_queue = separate_queues(queue)
     
@@ -113,72 +126,100 @@ def register_user():
     })
 
 
+
+
 @app.route("/api/process_user", methods=["POST"])
 def process_user():
-    """Process a specific user's ticket request."""
+
     data = request.json
     first_name = data.get("first_name")
     last_name = data.get("last_name")
-    
+    ticket_type = data.get("ticket_type")
+
+    # Load current queues and availability
     queue = read_csv_as_dicts(paths.queue_csv)
     vip_queue, regular_queue = separate_queues(queue)
-
     availability = get_availability()
-    vip_left = availability["VIP"]
-    reg_left = availability["Regular"]
+    vip_left, reg_left = availability["VIP"], availability["Regular"]
 
-    # Find the user in queues
-    user_found = None
-    ticket_type = None
-    
-    # Check VIP queue first
-    for user in vip_queue:
+    # Order of service: VIP queue first, then Regular
+    serving_order = vip_queue + regular_queue
+
+    updates = []
+    processed_user = None
+
+    for idx, user in enumerate(serving_order):
+        current_type = user["ticket_type"].upper()
+        current_name = f"{user['first_name']} {user['last_name']}"
+        updates.append({
+            "name": current_name,
+            "ticket_type": current_type,
+            "status": "Processing",
+            "remaining": {"VIP": vip_left, "Regular": reg_left}
+        })
+
+        time.sleep(1)  # simulate processing delay
+
+        # Serve based on separate inventories
+        if current_type == "VIP":
+            if vip_left > 0:
+                vip_left -= 1
+                status = "Confirmed"
+            else:
+                status = "Sold Out"
+        elif current_type == "REGULAR":
+            if reg_left > 0:
+                reg_left -= 1
+                status = "Confirmed"
+            else:
+                status = "Sold Out"
+        else:
+            status = "Invalid Type"
+
+        # Persist new availability after each user
+        with open('data/availability.json', 'w') as f:
+            json.dump({"VIP": vip_left, "Regular": reg_left}, f)
+
+        # Log transaction
+        append_transaction(paths.transactions_csv, {
+            "first_name": user["first_name"],
+            "last_name": user["last_name"],
+            "ticket_type": current_type,
+            "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "status": status
+        })
+
+        updates[-1]["status"] = status
+        updates[-1]["remaining"] = {"VIP": vip_left, "Regular": reg_left}
+
+
         if user["first_name"] == first_name and user["last_name"] == last_name:
-            user_found = user
-            ticket_type = ticket_type
+            processed_user = user
             break
-    
-    # If not in VIP, check Regular queue
-    if not user_found:
-        for user in regular_queue:
-            if user["first_name"] == first_name and user["last_name"] == last_name:
-                user_found = user
-                ticket_type = "Regular"
-                break
-    
-    if not user_found:
-        return jsonify({"error": "User not found in queue"}), 404
 
-    # Determine status based on availability
-    if ticket_type == "VIP":
-        status = "Confirmed" if vip_left > 0 else "Sold Out"
-    else:
-        status = "Confirmed" if reg_left > 0 else "Sold Out"
-
-    # Log transaction
-    append_transaction(paths.transactions_csv, {
-        "first_name": first_name,
-        "last_name": last_name,
-        "ticket_type": ticket_type,
-        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "status": status
-    })
-
-    # Remove user from queue
-    updated_queue = [u for u in queue if not (u["first_name"] == first_name and u["last_name"] == last_name)]
+    # Remove everyone processed so far (up to this user)
+    updated_queue = [
+        u for u in queue
+        if not any(
+            (u["first_name"] == p["first_name"] and u["last_name"] == p["last_name"])
+            for p in serving_order[: len(updates)]
+        )
+    ]
     write_queue(paths.queue_csv, updated_queue)
 
+    final_status = updates[-1]["status"] if updates else "Unknown"
+
     return jsonify({
-        "processed": f"{first_name} {last_name}",
-        "ticket_type": ticket_type,
-        "status": status,
-        "remaining_tickets": get_availability()
+        "updates": updates,
+        "final_status": final_status,
+        "remaining_tickets": {"VIP": vip_left, "Regular": reg_left}
     })
+
+
 
 
 @app.route("/process_next", methods=["POST"])
 def process_next():
-    """Process one person at a time, with VIP priority."""
     queue = read_csv_as_dicts(paths.queue_csv)
     vip_queue, regular_queue = separate_queues(queue)
 
@@ -227,19 +268,85 @@ def process_next():
 
 @app.route("/availability", methods=["GET"])
 def view_availability():
-    """Return how many tickets remain."""
     return jsonify(get_availability())
 
 
 @app.route("/queue", methods=["GET"])
 def view_queue():
-    """View everyone still waiting in line (both queues)."""
     queue = read_csv_as_dicts(paths.queue_csv)
     vip, regular = separate_queues(queue)
     return jsonify({
         "VIP Queue": vip,
         "Regular Queue": regular
     })
+
+@app.route("/summary_data", methods=["GET"])
+def summary_data():
+    """Return summary of tickets sold and remaining availability."""
+    try:
+        # --- Read availability ---
+        with open('data/availability.json', 'r') as f:
+            availability = json.load(f)
+        vip_remaining = availability.get("VIP", 0)
+        regular_remaining = availability.get("Regular", 0)
+    except FileNotFoundError:
+        vip_remaining = VIP_TICKETS
+        regular_remaining = REGULAR_TICKETS
+
+    # --- Count tickets sold from transactions.csv ---
+    transactions = read_csv_as_dicts(paths.transactions_csv)
+    vip_sold = sum(1 for t in transactions if t.get("ticket_type", "").lower() == "vip" and t.get("status", "").lower() == "confirmed")
+    regular_sold = sum(1 for t in transactions if t.get("ticket_type", "").lower() == "regular" and t.get("status", "").lower() == "confirmed")
+
+    # --- Totals ---
+    total_sold = vip_sold + regular_sold
+    total_remaining = vip_remaining + regular_remaining
+
+    return jsonify({
+        "vip_sold": vip_sold,
+        "regular_sold": regular_sold,
+        "vip_remaining": vip_remaining,
+        "regular_remaining": regular_remaining,
+        "total_sold": total_sold,
+        "total_remaining": total_remaining
+    })
+
+
+@app.route("/api/cancel_ticket", methods=["DELETE"])
+def cancel_ticket():
+    data = request.json
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+    ticket_type = data.get("ticket_type")
+
+    if not first_name or not last_name or not ticket_type:
+        return jsonify({"error": "Missing required information"}), 400
+
+    # Read current queue
+    queue = read_csv_as_dicts(paths.queue_csv)
+
+    # Filter out the matching ticket
+    updated_queue = [
+        q for q in queue
+        if not (
+            q["first_name"].strip().lower() == first_name.strip().lower()
+            and q["last_name"].strip().lower() == last_name.strip().lower()
+            and q["ticket_type"].strip().lower() == ticket_type.strip().lower()
+        )
+    ]
+
+    if len(updated_queue) == len(queue):
+        return jsonify({"error": "Ticket not found"}), 404
+
+    # Write the updated queue back
+    write_queue(paths.queue_csv, updated_queue)
+
+    
+
+    return jsonify({
+        "message": f"{first_name} {last_name}'s {ticket_type} ticket was cancelled successfully.",
+
+    }), 200
 
 
 if __name__ == "__main__":

@@ -16,7 +16,8 @@
             <ul>
                 <li><a href="{{ url_for('index') }}" class="active">Home</a></li>
                 <li><a href="{{ url_for('register_page') }}">Register</a></li>
-                <li><a href="{{ url_for('view_availability') }}">Availability</a></li>
+                 <li><a href="{{ url_for('register_page') }}">Availability</a></li>
+                <li><a href="{{ url_for('summary_page') }}">Summary</a></li>
             </ul>
         </nav>
     </header>
@@ -25,12 +26,12 @@
         <p>Purchase your tickets with ease</p>
         <a href="{{ url_for('register_page') }}"><button>Register</button></a><br>
         <a href="{{ url_for('register_page') }}"><button>Purchase Tickets</button></a><br>
-        <a href="{{ url_for('view_availability') }}"><button>Ticket Availability</button></a><br>
-        <a href="{{ url_for('view_queue') }}"><button>Summary</button></a>
+        <a href="{{ url_for('register_page') }}"><button>Ticket Availability</button></a><br>
+        <a href="{{ url_for('summary_page') }}"><button>Summary</button></a>
     </div>
   
     <footer>
-        Ticket System @ 2025
+        Ticket System © 2025
     </footer>
 </body>
 </html>

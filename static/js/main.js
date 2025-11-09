@@ -13,7 +13,7 @@ async function registerUser(event) {
     };
 
     // Update status to show registration is happening
-    updateStatusDisplay(ticketType, '—', 'Registering...');
+    updateStatusDisplay(ticketType, '—', 'Registering...', `${firstName} ${lastName}`);
 
     try {
         const response = await fetch('/api/register', {
@@ -27,14 +27,14 @@ async function registerUser(event) {
         if (!response.ok) {
             const error = await response.json();
             alert(error.error || 'Registration failed');
-            updateStatusDisplay('—', '—', 'Failed');
+            updateStatusDisplay('—', '—', 'Failed', '—');
             return;
         }
 
         const data = await response.json();
         
         // Show user is in queue
-        updateStatusDisplay(data.ticket_type, data.queue_position, 'In Queue');
+        updateStatusDisplay(data.ticket_type, data.queue_position, 'In Queue', `${firstName} ${lastName}`);
         
         // // Wait a moment, then start processing
         // setTimeout(async () => {
@@ -44,7 +44,7 @@ async function registerUser(event) {
     } catch (error) {
         console.error('Error:', error);
         alert('An error occurred while registering');
-        updateStatusDisplay('—', '—', 'Error');
+        updateStatusDisplay('—', '—', 'Error', '—');
     }
 }
 
@@ -53,7 +53,7 @@ async function processUserTicket(firstName, lastName, ticketType) {
     updateStatusDisplay(ticketType, 'Processing', 'Processing...');
     
     // Simulate processing delay (2-3 seconds)
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
         const response = await fetch('/api/process_user', {
@@ -108,12 +108,14 @@ async function processUserTicket(firstName, lastName, ticketType) {
     }
 }
 
-function updateStatusDisplay(ticketType, position, status) {
-    const statusTypeEl = document.getElementById('status-type');
+function updateStatusDisplay(ticketType, position, status, customerName) {
+    const customerNameEl = document.getElementById('customer-name');
+    const ticketTypeEl = document.getElementById('ticket-type');
     const queuePositionEl = document.getElementById('queue-position');
     const purchaseStatusEl = document.getElementById('purchase-status');
 
-    if (statusTypeEl) statusTypeEl.textContent = ticketType;
+    if (customerNameEl) customerNameEl.textContent = customerName || '—';
+    if (ticketTypeEl) ticketTypeEl.textContent = ticketType || '—';
     if (queuePositionEl) queuePositionEl.textContent = position;
     if (purchaseStatusEl) {
         purchaseStatusEl.textContent = status;
@@ -147,12 +149,12 @@ async function updateAvailability() {
         if (vipCountEl) vipCountEl.textContent = data.VIP;
         if (regularCountEl) regularCountEl.textContent = data.Regular;
 
-        // Also update if using different IDs
-        const vipAvailableEl = document.getElementById('vipAvailable');
-        const regularAvailableEl = document.getElementById('regularAvailable');
+        // // Also update if using different IDs
+        // const vipAvailableEl = document.getElementById('vipAvailable');
+        // const regularAvailableEl = document.getElementById('regularAvailable');
         
-        if (vipAvailableEl) vipAvailableEl.textContent = data.vip_left;
-        if (regularAvailableEl) regularAvailableEl.textContent = data.reg_left;
+        // if (vipAvailableEl) vipAvailableEl.textContent = data.vip_left;
+        // if (regularAvailableEl) regularAvailableEl.textContent = data.reg_left;
         
     } catch (error) {
         console.error('Error updating availability:', error);
@@ -195,3 +197,106 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAvailability();
     }, 5000);
 });
+
+async function startPurchase() {
+    const firstName = document.getElementById('fname').value.trim();
+    const lastName = document.getElementById('lname').value.trim();
+    const ticketType = document.getElementById('ticketType').value;
+
+    if (!firstName || !lastName) {
+        alert('Please register first!');
+        return;
+    }
+
+    updateStatusDisplay(ticketType, '—', 'Processing...', `${firstName} ${lastName}`);
+
+    try {
+        const response = await fetch('/api/process_user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ first_name: firstName, last_name: lastName, ticket_type: ticketType })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            alert(err.error || 'Processing failed.');
+            return;
+        }
+
+        const result = await response.json();
+
+        for (const step of result.updates) {
+            updateStatusDisplay(step.ticket_type, '—', `Processing...`, step.name);
+            document.getElementById('vip-count').textContent = step.remaining.VIP;
+            document.getElementById('regular-count').textContent = step.remaining.Regular;
+            await new Promise(resolve => setTimeout(resolve, 1200));
+        }
+
+
+        const finalStatus = result.final_status === 'Confirmed'
+            ? '✓ Confirmed'
+            : '✗ Sold Out';
+
+        updateStatusDisplay(ticketType, '—', finalStatus);
+        await updateAvailability();
+
+        alert(finalStatus === '✓ Confirmed'
+            ? 'Your ticket has been confirmed!'
+            : 'Sorry, tickets sold out before it reached you.');
+
+    } catch (err) {
+        console.error(err);
+        alert('Error during processing.');
+    }
+}
+
+async function cancelTicket() {
+    const firstName = document.getElementById('fname').value.trim();
+    const lastName = document.getElementById('lname').value.trim();
+    const ticketType = document.getElementById('ticketType').value;
+
+    if (!firstName || !lastName) {
+        alert('Please enter the first and last name of the ticket to cancel.');
+        return;
+    }
+
+    updateStatusDisplay(ticketType, '—', 'Cancelling...', `${firstName} ${lastName}`);
+
+    try {
+        const response = await fetch('/api/cancel_ticket', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                first_name: firstName,
+                last_name: lastName,
+                ticket_type: ticketType
+            })
+        });
+
+        // First check if response is ok
+        if (!response.ok) {
+            const error = await response.json();
+            alert(error.error || 'Cancellation failed.');
+            updateStatusDisplay(ticketType, '—', 'Cancellation Failed');
+            return;
+        }
+
+        // Only parse JSON after confirming response is ok
+        const result = await response.json();
+
+        // Update the status visually
+        updateStatusDisplay(ticketType, '—', 'Cancelled');
+        await updateAvailability(); // Also update ticket availability
+        await updateQueue(); // Reflect new queue state
+
+        alert(result.message || 'Ticket successfully cancelled.');
+
+        // Reset form and UI
+        document.getElementById('registrationForm').reset();
+
+    } catch (err) {
+        console.error('Error:', err);
+        alert('Error during cancellation.');
+        updateStatusDisplay(ticketType, '—', 'Error');
+    }
+}
